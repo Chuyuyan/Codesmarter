@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Account - SmartCursor</title>
+    <link rel="stylesheet" href="/static/css/auth.css">
+    <link rel="stylesheet" href="/static/css/account.css">
+    <link rel="stylesheet" href="/static/css/language-selector.css">
+</head>
+<body>
+    <div class="account-container">
+        <!-- Header -->
+        <header class="account-header">
+            <div class="header-content">
+                <h1>My Account</h1>
+                <nav class="account-nav">
+                    <a href="/" class="nav-link">Home</a>
+                    <button id="logoutBtnHeader" class="nav-link btn-logout-header" style="background: none; border: none; color: inherit; cursor: pointer; font-size: inherit; padding: 0; text-decoration: underline;">Logout</button>
+                </nav>
+            </div>
+        </header>
+
+        <div class="account-main">
+            <!-- Sidebar Navigation -->
+            <aside class="account-sidebar">
+                <nav class="sidebar-nav">
+                    <button class="nav-item active" data-section="profile">
+                        <span class="nav-icon">👤</span>
+                        <span>Profile</span>
+                    </button>
+                    <button class="nav-item" data-section="security">
+                        <span class="nav-icon">🔒</span>
+                        <span>Security</span>
+                    </button>
+                    <button class="nav-item" data-section="settings">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Settings</span>
+                    </button>
+                    <button class="nav-item" data-section="danger">
+                        <span class="nav-icon">⚠️</span>
+                        <span>Danger Zone</span>
+                    </button>
+                </nav>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="account-content">
+                <!-- Profile Section -->
+                <section id="profile-section" class="content-section active">
+                    <div class="section-header">
+                        <h2>Profile Information</h2>
+                        <p>Manage your account profile</p>
+                    </div>
+
+                    <div class="profile-card">
+                        <div class="profile-avatar">
+                            <div class="avatar-circle">
+                                <span id="avatarInitials">U</span>
+                            </div>
+                        </div>
+
+                        <div class="profile-info">
+                            <div class="info-item">
+                                <label>Username</label>
+                                <div class="info-value" id="profileUsername">-</div>
+                            </div>
+                            <div class="info-item">
+                                <label>Email</label>
+                                <div class="info-value" id="profileEmail">-</div>
+                            </div>
+                            <div class="info-item">
+                                <label>Phone Number</label>
+                                <div class="info-value" id="profilePhone">-</div>
+                            </div>
+                            <div class="info-item">
+                                <label>Member Since</label>
+                                <div class="info-value" id="profileCreatedAt">-</div>
+                            </div>
+                            <div class="info-item">
+                                <label>Account Status</label>
+                                <div class="info-value">
+                                    <span class="status-badge active">Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="action-card">
+                        <h3>Update Profile</h3>
+                        <form id="updateProfileForm" class="account-form">
+                            <div class="form-group">
+                                <label for="updateUsername">Username</label>
+                                <input 
+                                    type="text" 
+                                    id="updateUsername" 
+                                    name="username"
+                                    placeholder="Enter new username"
+                                >
+                                <span class="error-message" id="updateUsernameError"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="updateEmail">Email</label>
+                                <input 
+                                    type="email" 
+                                    id="updateEmail" 
+                                    name="email"
+                                    placeholder="Enter new email"
+                                >
+                                <span class="error-message" id="updateEmailError"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="updatePhone">Phone Number (E.164 format: +1234567890)</label>
+                                <input 
+                                    type="tel" 
+                                    id="updatePhone" 
+                                    name="phone_number"
+                                    placeholder="+1234567890"
+                                    pattern="^\+[1-9]\d{1,14}$"
+                                >
+                                <span class="error-message" id="updatePhoneError"></span>
+                                <small style="color: #718096; font-size: 12px;">Optional: Add phone number to receive SMS password reset links</small>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <span class="btn-text">Update Profile</span>
+                                <span class="btn-loader" style="display: none;">⏳</span>
+                            </button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Security Section -->
+                <section id="security-section" class="content-section">
+                    <div class="section-header">
+                        <h2>Security</h2>
+                        <p>Manage your password and security settings</p>
+                    </div>
+
+                    <div class="action-card">
+                        <h3>Change Password</h3>
+                        <form id="changePasswordForm" class="account-form">
+                            <div class="form-group">
+                                <label for="currentPassword">Current Password</label>
+                                <div class="password-input-wrapper">
+                                    <input 
+                                        type="password" 
+                                        id="currentPassword" 
+                                        name="currentPassword"
+                                        placeholder="Enter current password"
+                                        required
+                                    >
+                                    <button type="button" class="toggle-password" id="toggleCurrentPassword" aria-label="Show password"></button>
+                                </div>
+                                <span class="error-message" id="currentPasswordError"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="newPassword">New Password</label>
+                                <div class="password-input-wrapper">
+                                    <input 
+                                        type="password" 
+                                        id="newPassword" 
+                                        name="newPassword"
+                                        placeholder="Enter new password (min 6 characters)"
+                                        required
+                                        minlength="6"
+                                    >
+                                    <button type="button" class="toggle-password" id="toggleNewPassword" aria-label="Show password"></button>
+                                </div>
+                                <span class="error-message" id="newPasswordError"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="confirmNewPassword">Confirm New Password</label>
+                                <div class="password-input-wrapper">
+                                    <input 
+                                        type="password" 
+                                        id="confirmNewPassword" 
+                                        name="confirmNewPassword"
+                                        placeholder="Re-enter new password"
+                                        required
+                                        minlength="6"
+                                    >
+                                    <button type="button" class="toggle-password" id="toggleConfirmNewPassword" aria-label="Show password"></button>
+                                </div>
+                                <span class="error-message" id="confirmNewPasswordError"></span>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <span class="btn-text">Change Password</span>
+                                <span class="btn-loader" style="display: none;">⏳</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>Active Sessions</h3>
+                        <p>You are currently logged in on this device.</p>
+                        <button class="btn btn-secondary" id="logoutBtn">Logout</button>
+                    </div>
+                </section>
+
+                <!-- Settings Section -->
+                <section id="settings-section" class="content-section">
+                    <div class="section-header">
+                        <h2>Settings</h2>
+                        <p>Customize your experience</p>
+                    </div>
+
+                    <div class="action-card">
+                        <h3>Preferences</h3>
+                        <div class="settings-list">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Email Notifications</label>
+                                    <p>Receive email updates about your account</p>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="emailNotifications" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Auto-save</label>
+                                    <p>Automatically save your work</p>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="autoSave" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Danger Zone Section -->
+                <section id="danger-section" class="content-section">
+                    <div class="section-header">
+                        <h2>Danger Zone</h2>
+                        <p>Irreversible and destructive actions</p>
+                    </div>
+
+                    <div class="danger-card">
+                        <div class="danger-item">
+                            <div class="danger-info">
+                                <h3>Delete Account</h3>
+                                <p>Permanently delete your account and all associated data. This action cannot be undone.</p>
+                            </div>
+                            <button class="btn btn-danger" id="deleteAccountBtn">Delete Account</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Messages -->
+                <div class="auth-message" id="accountMessage"></div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Delete Account Confirmation Modal -->
+    <div id="deleteModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Delete Account</h3>
+            <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancelDeleteBtn">Cancel</button>
+                <button class="btn btn-danger" id="confirmDeleteBtn">Delete Account</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/i18n.js"></script>
+    <script src="/static/js/language-selector.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/account.js"></script>
+</body>
+</html>
+

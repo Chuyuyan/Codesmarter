@@ -1,0 +1,124 @@
+/**
+ * Top Navigation Bar Styles
+ * Always visible navigation bar with language selector and auth buttons
+ */
+
+.top-navbar {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 12px 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.navbar-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar-left {
+    display: flex;
+    align-items: center;
+}
+
+.navbar-logo {
+    font-size: 18px;
+    font-weight: 600;
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.navbar-logo:hover {
+    color: #764ba2;
+}
+
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.navbar-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    color: #667eea;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+.navbar-btn:hover {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: rgba(102, 126, 234, 0.5);
+}
+
+.navbar-btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+}
+
+.navbar-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.navbar-btn-logout {
+    color: #e74c3c;
+    border-color: rgba(231, 76, 60, 0.3);
+}
+
+.navbar-btn-logout:hover {
+    background: rgba(231, 76, 60, 0.1);
+    border-color: rgba(231, 76, 60, 0.5);
+}
+
+/* Language selector in navbar */
+.top-navbar .language-selector {
+    margin-right: 8px;
+}
+
+.top-navbar .language-btn {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    font-size: 13px;
+    padding: 6px 12px;
+}
+
+.top-navbar .language-btn:hover {
+    background: rgba(102, 126, 234, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .navbar-content {
+        flex-wrap: wrap;
+    }
+    
+    .navbar-right {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .navbar-btn {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+}
+

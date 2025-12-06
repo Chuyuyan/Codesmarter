@@ -1,0 +1,264 @@
+{
+  "name": "code-analysis-assistant",
+  "displayName": "Code Analysis Assistant",
+  "description": "AI-powered code analysis similar to Cursor - understand and analyze your codebase",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other",
+    "Machine Learning"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "codeAssistant.indexRepo",
+        "title": "Index Repository",
+        "category": "Code Assistant"
+      },
+      {
+        "command": "codeAssistant.chat",
+        "title": "Ask Question About Code",
+        "category": "Code Assistant",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "codeAssistant.openChat",
+        "title": "Open Chat Panel",
+        "category": "Code Assistant",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "codeAssistant.editSelection",
+        "title": "Edit Selection with AI",
+        "category": "Code Assistant",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "codeAssistant.generateTests",
+        "title": "Generate Tests for Selection",
+        "category": "Code Assistant",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "codeAssistant.generateDocs",
+        "title": "Generate Documentation for Selection",
+        "category": "Code Assistant",
+        "icon": "$(book)"
+      },
+      {
+        "command": "codeAssistant.refactor",
+        "title": "Refactor Selection",
+        "category": "Code Assistant",
+        "icon": "$(tools)"
+      },
+      {
+        "command": "codeAssistant.explain",
+        "title": "Explain This Code",
+        "category": "Code Assistant",
+        "icon": "$(info)"
+      },
+      {
+        "command": "codeAssistant.review",
+        "title": "Review Code",
+        "category": "Code Assistant",
+        "icon": "$(search)"
+      },
+      {
+        "command": "codeAssistant.login",
+        "title": "Login",
+        "category": "Code Assistant",
+        "icon": "$(sign-in)"
+      },
+      {
+        "command": "codeAssistant.signup",
+        "title": "Sign Up",
+        "category": "Code Assistant",
+        "icon": "$(account)"
+      },
+      {
+        "command": "codeAssistant.logout",
+        "title": "Logout",
+        "category": "Code Assistant",
+        "icon": "$(sign-out)"
+      },
+      {
+        "command": "codeAssistant.profile",
+        "title": "Show Profile",
+        "category": "Code Assistant",
+        "icon": "$(person)"
+      },
+      {
+        "command": "codeAssistant.selectLanguage",
+        "title": "Change Language",
+        "category": "Code Assistant",
+        "icon": "$(globe)"
+      },
+      {
+        "command": "codeAssistant.generateProject",
+        "title": "Generate New Project",
+        "category": "Code Assistant",
+        "icon": "$(file-directory-create)"
+      },
+      {
+        "command": "codeAssistant.refreshAuth",
+        "title": "Refresh Auth Status",
+        "category": "Code Assistant"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "codeAssistant.openChat",
+        "key": "ctrl+k",
+        "mac": "cmd+k",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "codeAssistant.editSelection",
+        "key": "ctrl+alt+e",
+        "mac": "cmd+alt+e",
+        "when": "editorHasSelection && editorTextFocus"
+      },
+      {
+        "command": "codeAssistant.editSelection",
+        "key": "ctrl+k ctrl+e",
+        "mac": "cmd+k cmd+e",
+        "when": "editorHasSelection && editorTextFocus"
+      },
+      {
+        "command": "codeAssistant.indexRepo",
+        "key": "ctrl+shift+i",
+        "mac": "cmd+shift+i",
+        "when": "workspaceFolderCount > 0"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "codeAssistant",
+          "name": "Code Assistant",
+          "when": "true"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "codeAssistant",
+          "title": "Code Assistant",
+          "icon": "$(comment-discussion)"
+        }
+      ]
+    },
+      "viewsWelcome": [
+      {
+        "view": "codeAssistant",
+        "contents": "Welcome to Code Assistant!\n\n🚀 [Generate New Project](command:codeAssistant.generateProject)\n📁 [Index Repository](command:codeAssistant.indexRepo)\n💬 [Open Chat](command:codeAssistant.openChat)"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "codeAssistant.editSelection",
+          "when": "editorHasSelection",
+          "group": "codeAssistant@1"
+        },
+        {
+          "command": "codeAssistant.generateTests",
+          "when": "editorHasSelection",
+          "group": "codeAssistant@2"
+        },
+        {
+          "command": "codeAssistant.generateDocs",
+          "when": "editorHasSelection",
+          "group": "codeAssistant@3"
+        },
+        {
+          "command": "codeAssistant.refactor",
+          "when": "editorHasSelection",
+          "group": "codeAssistant@4"
+        },
+        {
+          "command": "codeAssistant.explain",
+          "when": "editorHasSelection || editorTextFocus",
+          "group": "codeAssistant@5"
+        },
+        {
+          "command": "codeAssistant.review",
+          "when": "editorHasSelection",
+          "group": "codeAssistant@6"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "codeAssistant.editSelection",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "codeAssistant.generateTests",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "codeAssistant.generateDocs",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "codeAssistant.refactor",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "codeAssistant.explain",
+          "when": "editorHasSelection || editorTextFocus"
+        },
+        {
+          "command": "codeAssistant.review",
+          "when": "editorHasSelection"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Code Assistant",
+      "properties": {
+        "codeAssistant.serverUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:5050",
+          "description": "Backend server URL"
+        },
+        "codeAssistant.defaultRepoPath": {
+          "type": "string",
+          "default": "",
+          "description": "Default repository path for indexing"
+        },
+        "codeAssistant.enableInlineCompletion": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable inline code completion (Tab feature)"
+        },
+        "codeAssistant.enableHoverTooltips": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable hover tooltips with AI explanations"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "^18.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}
+

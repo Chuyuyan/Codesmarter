@@ -1,0 +1,20 @@
+﻿# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+
+# Index/Cache
+data/index/
+data/repos/
+
+# OS
+.DS_Store
+Thumbs.db
+
+SMS_ENABLED=true
+TWILIO_ACCOUNT_SID=ACXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+TWILIO_AUTH_TOKEN=YOUR_TWILIO_AUTH_TOKEN_HERE
+TWILIO_FROM_NUMBER=+1234567890
+BASE_URL=http://localhost:5050

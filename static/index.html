@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Analysis - Cursor-like Assistant</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/auth.css">
+    <link rel="stylesheet" href="/static/css/language-selector.css">
+    <link rel="stylesheet" href="/static/css/navbar.css">
+</head>
+<body>
+    <!-- Top Navigation Bar - Always Visible -->
+    <nav class="top-navbar">
+        <div class="navbar-content">
+            <div class="navbar-left">
+                <a href="/" class="navbar-logo" data-i18n="home">Home</a>
+            </div>
+            <div class="navbar-right" style="display: flex; align-items: center; gap: 12px;">
+                <!-- Language selector - always visible -->
+                <div id="languageSelectorPlaceholder" style="display: flex; align-items: center; min-width: 100px;"></div>
+                <!-- Account and Logout buttons - shown when logged in -->
+                <div id="authButtons" style="display: none; gap: 12px; align-items: center;">
+                    <a href="/account" class="navbar-btn" data-i18n="myAccount">My Account</a>
+                    <button id="logoutBtn" class="navbar-btn navbar-btn-logout" data-i18n="logout">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    
+    <div class="container">
+        <header style="position: relative;">
+            <h1 data-i18n="codeAnalysisAssistant">🔍 Code Analysis Assistant</h1>
+            <p class="subtitle" data-i18n="analyzeYourCodebase">Analyze your codebase with AI - like Cursor</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Index Repository Section -->
+            <section class="card" id="index-section">
+                <h2 data-i18n="indexRepository">📚 Index Repository</h2>
+                <p class="description" data-i18n="indexRepositoryDesc">Index your repository to enable code analysis. This creates a searchable index of your codebase.</p>
+                <div class="form-group">
+                    <label for="repo-dir" data-i18n="repositoryPath">Repository Path:</label>
+                    <input type="text" id="repo-dir" placeholder="C:\Users\57811\my-portfolio" value="C:\Users\57811\my-portfolio">
+                    <button id="index-btn" class="btn btn-primary" data-i18n="indexRepositoryBtn">Index Repository</button>
+                </div>
+                <div id="index-status" class="status"></div>
+            </section>
+
+            <!-- Chat Section -->
+            <section class="card" id="chat-section">
+                <h2 data-i18n="askQuestions">💬 Ask Questions About Your Code</h2>
+                <p class="description" data-i18n="askQuestionsDesc">Ask questions about your codebase and get AI-powered answers with code citations.</p>
+                
+                <div class="form-group">
+                    <label for="chat-repo-dir" data-i18n="repositoryPath">Repository Path:</label>
+                    <input type="text" id="chat-repo-dir" placeholder="C:\Users\57811\my-portfolio" value="C:\Users\57811\my-portfolio">
+                </div>
+
+                <div class="form-group">
+                    <label for="question" data-i18n="yourQuestion">Your Question:</label>
+                    <textarea id="question" rows="4" placeholder="e.g., How does authentication work in this codebase?"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <label style="display: flex; align-items: center; gap: 5px; font-size: 0.95em; cursor: pointer;">
+                            <input type="checkbox" id="auto-detect-mode" checked style="margin: 0; cursor: pointer;">
+                            <span data-i18n="autoDetectMode">Auto-detect analysis type</span>
+                        </label>
+                    </div>
+                    <select id="analysis-type" style="display: none;">
+                        <option value="explain" data-i18n="explain">Explain - Explain what the code does</option>
+                        <option value="refactor" data-i18n="refactor">Refactor - Suggest refactoring improvements</option>
+                        <option value="debug" data-i18n="debug">Debug - Help identify bugs and issues</option>
+                        <option value="optimize" data-i18n="optimize">Optimize - Suggest performance optimizations</option>
+                        <option value="generate" data-i18n="generate">Generate - Create or generate new code/project</option>
+                    </select>
+                </div>
+
+                <button id="chat-btn" class="btn btn-primary" data-i18n="askQuestionBtn">Ask Question</button>
+                <div id="chat-status" class="status"></div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="card" id="results-section" style="display: none;">
+                <h2 data-i18n="answer">📋 Answer</h2>
+                <div id="answer" class="answer-content"></div>
+                
+                <h3 data-i18n="codeCitations">📎 Code Citations</h3>
+                <div id="citations" class="citations-list"></div>
+            </section>
+        </div>
+    </div>
+
+    <script src="/static/js/i18n.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/language-selector.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
+

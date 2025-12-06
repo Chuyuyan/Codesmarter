@@ -1,0 +1,4 @@
+Flask==2.3.0
+flask-cors==4.0.0
+{{DATABASE_PACKAGE}}
+{{ADDITIONAL_PACKAGES}}

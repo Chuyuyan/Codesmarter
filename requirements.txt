@@ -1,0 +1,18 @@
+﻿flask
+flask-sqlalchemy    # Database ORM
+flask-cors          # CORS support
+requests
+python-dotenv
+faiss-cpu           # Windows 平台安装 FAISS（做向量检索）
+sentence-transformers
+ripgrep-python      # 用 Python 版本的 ripgrep（可选；你系统已有 rg.exe 可以不装）
+openai
+pyjwt               # JWT token support
+werkzeug            # Password hashing (usually comes with Flask)
+tree-sitter         # AST parsing for semantic code chunking
+tree-sitter-python  # Python language support
+tree-sitter-javascript  # JavaScript/TypeScript language support
+watchdog            # File system watching for auto-sync
+twilio              # SMS sending via Twilio
+python-dotenv       # Environment variable management
+
