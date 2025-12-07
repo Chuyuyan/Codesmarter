@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Debug Tabs</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+        .result { background: white; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { border-left: 4px solid green; }
+        .error { border-left: 4px solid red; }
+        .info { border-left: 4px solid blue; }
+        pre { background: #f0f0f0; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Tab Debugging Tool</h1>
+    <p>Run this in browser console (F12) on the main page:</p>
+    <pre>
+// Complete diagnostic script
+console.log('=== TAB DIAGNOSTIC ===');
+
+// Check if tabs exist in DOM
+const tabs = document.querySelector('.index-tabs');
+const uploadTab = document.querySelector('#upload-tab');
+const gitTab = document.querySelector('#git-tab');
+const pathTab = document.querySelector('#path-tab');
+
+console.log('\n1. Element Check:');
+console.log('  Tabs container:', tabs ? '✅ EXISTS' : '❌ NOT FOUND');
+console.log('  Upload tab:', uploadTab ? '✅ EXISTS' : '❌ NOT FOUND');
+console.log('  Git tab:', gitTab ? '✅ EXISTS' : '❌ NOT FOUND');
+console.log('  Path tab:', pathTab ? '✅ EXISTS' : '❌ NOT FOUND');
+
+if (tabs) {
+    console.log('\n2. Tabs Container Info:');
+    const style = window.getComputedStyle(tabs);
+    console.log('  Display:', style.display);
+    console.log('  Visibility:', style.visibility);
+    console.log('  Opacity:', style.opacity);
+    console.log('  Width:', style.width);
+    console.log('  Height:', style.height);
+    console.log('  HTML:', tabs.outerHTML.substring(0, 200));
+    
+    console.log('\n3. Tab Buttons:');
+    const buttons = tabs.querySelectorAll('.tab-btn');
+    console.log('  Button count:', buttons.length);
+    buttons.forEach((btn, i) => {
+        console.log(`  Button ${i + 1}:`, btn.textContent.trim());
+    });
+} else {
+    console.log('\n❌ PROBLEM: Tabs container not found in DOM!');
+    console.log('This means the HTML is old version.');
+    
+    // Check what's actually in the index-section
+    const indexSection = document.querySelector('#index-section');
+    if (indexSection) {
+        console.log('\nCurrent index-section content:');
+        console.log(indexSection.innerHTML.substring(0, 500));
+    }
+}
+
+// Check page HTML source
+console.log('\n4. Page Source Check:');
+const pageHTML = document.documentElement.outerHTML;
+if (pageHTML.includes('index-tabs')) {
+    console.log('  ✅ HTML source contains "index-tabs"');
+} else {
+    console.log('  ❌ HTML source does NOT contain "index-tabs"');
+    console.log('  This confirms old HTML version is loaded.');
+}
+
+// Check if cache is the issue
+console.log('\n5. Cache Check:');
+console.log('  Current URL:', window.location.href);
+console.log('  Page title:', document.title);
+    </pre>
+    
+    <div class="result info">
+        <strong>Instructions:</strong>
+        <ol>
+            <li>Go to <code>http://127.0.0.1:5050/</code></li>
+            <li>Press F12 to open Developer Tools</li>
+            <li>Go to Console tab</li>
+            <li>Copy and paste the script above</li>
+            <li>Press Enter to run</li>
+            <li>Send me the output</li>
+        </ol>
+    </div>
+</body>
+</html>
+

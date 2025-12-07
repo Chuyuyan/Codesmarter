@@ -3,7 +3,25 @@
  * Handles login, registration, and token management
  */
 
-const API_BASE = 'http://127.0.0.1:5050';
+// Auto-detect API base URL based on current page
+const API_BASE = (() => {
+    // Always use relative path for same-origin requests (works for Docker/public access)
+    // This ensures it works whether accessed via localhost, IP, or domain name
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    const port = window.location.port;
+    
+    // Only use absolute URL for explicit localhost/127.0.0.1 in development
+    // For all other cases (including Docker/public access), use relative path
+    if (hostname === '127.0.0.1' || hostname === 'localhost') {
+        // Local development - use full URL
+        return 'http://127.0.0.1:5050';
+    }
+    
+    // Public access or Docker - use relative path (same origin)
+    // This will use the same protocol, hostname, and port as the current page
+    return '';
+})();
 
 // Token management
 const TokenManager = {
@@ -54,7 +72,8 @@ async function apiCall(endpoint, options = {}) {
     }
     
     try {
-        const url = `${API_BASE}${endpoint}`;
+        // Use relative path if API_BASE is empty (same origin), otherwise use full URL
+        const url = API_BASE ? `${API_BASE}${endpoint}` : endpoint;
         console.log('[apiCall] Making request to:', url, options.method || 'GET');
         console.log('[apiCall] Request options:', { method: options.method || 'GET', headers, body: options.body });
         
@@ -210,9 +229,9 @@ if (loginForm) {
                 
                 showMessage('Login successful! Redirecting...', 'success');
                 
-                // Redirect to main app after 1 second
+                // Redirect to dashboard after 1 second
                 setTimeout(() => {
-                    window.location.href = '/';
+                    window.location.href = '/dashboard';
                 }, 1000);
             } else {
                 const errorMsg = result.data?.error || 'Login failed. Please check your credentials.';
@@ -306,9 +325,9 @@ if (registerForm) {
                     TokenManager.setToken(loginResult.data.token);
                     TokenManager.setUserInfo(loginResult.data.user);
                     
-                    // Redirect to main app
+                    // Redirect to dashboard
                     setTimeout(() => {
-                        window.location.href = '/';
+                        window.location.href = '/dashboard';
                     }, 1500);
                 } else {
                     showMessage('Account created! Please login.', 'success');
@@ -470,10 +489,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Token invalid, clear it
                 TokenManager.removeToken();
             } else {
-                // Already logged in, redirect to home
+                // Already logged in, redirect to dashboard
                 if (window.location.pathname.includes('login.html') || 
                     window.location.pathname.includes('register.html')) {
-                    window.location.href = '/';
+                    window.location.href = '/dashboard';
                 }
             }
         });

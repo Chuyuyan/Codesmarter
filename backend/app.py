@@ -4,6 +4,12 @@ import traceback
 import json
 import os
 import sys
+import zipfile
+import shutil
+import uuid
+import subprocess
+import re
+from werkzeug.utils import secure_filename
 
 # Add project root to Python path so imports work when running from backend/
 project_root = Path(__file__).parent.parent
@@ -41,6 +47,7 @@ from backend.modules.repo_generator import generate_repository
 from backend.config import DATA_DIR, TOP_K_EMB, TOP_K_FINAL
 from backend.modules.database import init_database, db
 from backend.modules.user_auth import UserAuth, require_auth
+from backend.modules.user_repo_helper import verify_user_owns_repo
 from flask import g
 from flask_cors import CORS
 
@@ -70,11 +77,84 @@ user_auth = UserAuth(db)
 def before_request():
     """Set up request context."""
     g.user_auth = user_auth
+    # Debug: Log ALL requests to see what's happening
+    print(f"\n[DEBUG] BEFORE_REQUEST: {request.method} {request.path}")
+    if request.path == '/dashboard':
+        print(f"[DEBUG] *** /dashboard REQUEST DETECTED! ***")
+        print(f"[DEBUG] Request method: {request.method}")
+        print(f"[DEBUG] Request URL: {request.url}")
 
 # Serve frontend
 @app.route('/')
 def index():
-    return send_from_directory(STATIC_DIR, 'index.html')
+    """Serve landing page"""
+    response = send_from_directory(STATIC_DIR, 'landing.html')
+    # Prevent browser caching
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
+@app.route('/dashboard', methods=['GET'])
+@app.route('/dashboard/', methods=['GET'])  # Also handle trailing slash
+def dashboard():
+    """Serve dashboard page (main app) - authentication checked client-side"""
+    print(f"\n{'='*70}")
+    print(f"[CRITICAL] /dashboard ROUTE FUNCTION EXECUTED!")
+    print(f"{'='*70}\n")
+    try:
+        print(f"\n[DEBUG] ========================================")
+        print(f"[DEBUG] /dashboard route CALLED")
+        print(f"[DEBUG] Request method: {request.method}")
+        print(f"[DEBUG] Request path: {request.path}")
+        print(f"[DEBUG] STATIC_DIR: {STATIC_DIR}")
+        print(f"[DEBUG] STATIC_DIR type: {type(STATIC_DIR)}")
+        print(f"[DEBUG] STATIC_DIR exists: {STATIC_DIR.exists()}")
+        dashboard_path = STATIC_DIR / 'dashboard.html'
+        print(f"[DEBUG] dashboard.html full path: {dashboard_path}")
+        print(f"[DEBUG] dashboard.html exists: {dashboard_path.exists()}")
+        
+        # List all files in static directory
+        if STATIC_DIR.exists():
+            static_files = list(STATIC_DIR.glob('*.html'))
+            print(f"[DEBUG] HTML files in static dir: {[f.name for f in static_files]}")
+        else:
+            print(f"[ERROR] STATIC_DIR does not exist!")
+            return jsonify({
+                "error": f"STATIC_DIR does not exist: {STATIC_DIR}",
+                "static_dir": str(STATIC_DIR),
+                "base_dir": str(BASE_DIR)
+            }), 500
+        
+        if not dashboard_path.exists():
+            print(f"[ERROR] dashboard.html not found at {dashboard_path}")
+            return jsonify({
+                "error": f"dashboard.html not found",
+                "path": str(dashboard_path),
+                "static_dir": str(STATIC_DIR),
+                "available_files": [f.name for f in static_files] if STATIC_DIR.exists() else []
+            }), 404
+        
+        print(f"[DEBUG] Sending dashboard.html file...")
+        response = send_from_directory(STATIC_DIR, 'dashboard.html')
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        print(f"[DEBUG] /dashboard response sent successfully (status: {response.status_code})")
+        print(f"[DEBUG] ========================================\n")
+        return response
+    except Exception as e:
+        print(f"\n[ERROR] ========================================")
+        print(f"[ERROR] Exception in /dashboard route: {e}")
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"[ERROR] Traceback:\n{error_trace}")
+        print(f"[ERROR] ========================================\n")
+        return jsonify({
+            "error": str(e),
+            "type": type(e).__name__,
+            "traceback": error_trace
+        }), 500
 
 @app.route('/login')
 def login_page():
@@ -294,7 +374,9 @@ def agent():
         if not repo_dir:
             return jsonify({"ok": False, "error": "repo_dir or repo_dirs must be provided"}), 400
         
-        # Verify user owns the repo
+        # Verify user owns the repo (if already indexed)
+        # Note: This check is for already-indexed repos in /agent endpoint
+        # For /index_repo, we allow indexing new repos (no ownership check needed)
         if not verify_user_owns_repo(user_auth, user_id, repo_dir):
             return jsonify({"ok": False, "error": "Repository not found or access denied"}), 403
         
@@ -490,9 +572,13 @@ def index_repo():
         if not repo_dir:
             return jsonify({"ok": False, "error": "repo_dir or repo_dirs must be provided"}), 400
         
-        # Verify user owns the repo
-        if not verify_user_owns_repo(user_auth, user_id, repo_dir):
-            return jsonify({"ok": False, "error": "Repository not found or access denied"}), 403
+        # Get user_id - repository will be associated with this user after indexing
+        user_id = request.current_user_id
+        
+        # Note: We don't check ownership before indexing because:
+        # - New repos don't exist in database yet (no ownership to verify)
+        # - After indexing, repo will be associated with the current user
+        # - Ownership checks happen when accessing/searching existing repos
         
         repo_path = Path(repo_dir)
         if not repo_path.exists():
@@ -541,6 +627,266 @@ def index_repo():
         print(f"[index_repo] Error: {error_msg}")
         print(f"[index_repo] Traceback:\n{error_trace}")
         return jsonify({"ok": False, "error": error_msg, "traceback": error_trace}), 500
+
+
+@app.post("/clone_and_index")
+@require_auth
+def clone_and_index():
+    """
+    Clone a Git repository from URL and index it.
+    
+    Accepts:
+    - git_url: Git repository URL (required)
+    - repo_name: Optional name for the repository
+    - branch: Optional branch name (default: main/master)
+    - token: Optional authentication token for private repos
+    
+    Returns:
+    - {ok, repo_id, chunks, cloned_path}
+    """
+    try:
+        data = request.json or {}
+        git_url = data.get("git_url", "").strip()
+        repo_name = data.get("repo_name", "").strip()
+        branch = data.get("branch", "").strip()
+        token = data.get("token", "").strip()  # For private repos
+        
+        if not git_url:
+            return jsonify({"ok": False, "error": "git_url is required"}), 400
+        
+        # Validate Git URL format
+        git_url_pattern = re.compile(
+            r'^(https?://|git@|git://)([^/\s]+)/([^/\s]+)/([^/\s]+?)(?:\.git)?/?$',
+            re.IGNORECASE
+        )
+        if not git_url_pattern.match(git_url):
+            # Also support git:// protocol
+            if not git_url.startswith(('http://', 'https://', 'git@', 'git://')):
+                return jsonify({
+                    "ok": False, 
+                    "error": "Invalid Git URL format. Supported formats: https://github.com/user/repo, git@github.com:user/repo.git"
+                }), 400
+        
+        # Get user_id
+        user_id = request.current_user_id
+        
+        # Generate repo name from URL if not provided
+        if not repo_name:
+            # Extract repo name from URL
+            match = re.search(r'/([^/]+?)(?:\.git)?/?$', git_url)
+            if match:
+                repo_name = match.group(1)
+            else:
+                repo_name = f"repo_{uuid.uuid4().hex[:8]}"
+        
+        # Sanitize repo name
+        repo_name = secure_filename(repo_name)[:50]
+        
+        # Create clone directory
+        clone_dir = Path(f"{DATA_DIR}/clones")
+        clone_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate unique ID for this clone
+        clone_id = str(uuid.uuid4())[:8]
+        target_dir = clone_dir / clone_id
+        
+        try:
+            # Prepare Git URL with token if provided
+            clone_url = git_url
+            if token and git_url.startswith('https://'):
+                # Insert token into URL for authentication
+                # https://github.com/user/repo -> https://token@github.com/user/repo
+                clone_url = git_url.replace('https://', f'https://{token}@')
+            elif token and git_url.startswith('http://'):
+                clone_url = git_url.replace('http://', f'http://{token}@')
+            
+            print(f"[clone_and_index] Cloning repository: {git_url}")
+            print(f"[clone_and_index] Target directory: {target_dir}")
+            
+            # Clone repository
+            clone_cmd = ['git', 'clone', '--depth', '1', '--quiet']
+            
+            # Add branch if specified
+            if branch:
+                clone_cmd.extend(['--branch', branch])
+            
+            clone_cmd.extend([clone_url, str(target_dir)])
+            
+            print(f"[clone_and_index] Running: {' '.join(clone_cmd[:3])} ... [URL] ... {target_dir}")
+            
+            result = subprocess.run(
+                clone_cmd,
+                capture_output=True,
+                text=True,
+                timeout=300  # 5 minutes timeout
+            )
+            
+            if result.returncode != 0:
+                error_msg = result.stderr or result.stdout or "Unknown error"
+                
+                # Provide helpful error messages
+                if "fatal: repository" in error_msg.lower() or "not found" in error_msg.lower():
+                    return jsonify({
+                        "ok": False,
+                        "error": "Repository not found. Check the URL or ensure the repository is public. For private repos, provide an authentication token."
+                    }), 400
+                elif "authentication" in error_msg.lower() or "permission" in error_msg.lower():
+                    return jsonify({
+                        "ok": False,
+                        "error": "Authentication failed. For private repositories, provide a valid access token."
+                    }), 401
+                elif "could not resolve host" in error_msg.lower():
+                    return jsonify({
+                        "ok": False,
+                        "error": "Could not connect to Git server. Check your internet connection and the repository URL."
+                    }), 400
+                else:
+                    return jsonify({
+                        "ok": False,
+                        "error": f"Git clone failed: {error_msg[:200]}"
+                    }), 400
+            
+            print(f"[clone_and_index] Clone successful: {target_dir}")
+            
+            # Find the actual repository root
+            repo_root = target_dir
+            
+            # If clone created a subdirectory (common with git clone), use that
+            try:
+                entries = list(target_dir.iterdir())
+                if len(entries) == 1 and entries[0].is_dir():
+                    repo_root = entries[0]
+                elif len(entries) == 0:
+                    # Empty directory - shouldn't happen but handle it
+                    print(f"[clone_and_index] Warning: Clone directory is empty")
+                    raise Exception("Clone directory is empty - git clone may have failed")
+                # If multiple entries, use target_dir as root (repo files at top level)
+            except Exception as e:
+                print(f"[clone_and_index] Error finding repository root: {e}")
+                # Clean up on error
+                if target_dir.exists():
+                    shutil.rmtree(target_dir, ignore_errors=True)
+                raise Exception(f"Failed to locate repository root after clone: {e}")
+            
+            repo_path = str(repo_root.resolve())
+            if not Path(repo_path).exists():
+                # Clean up on error
+                if target_dir.exists():
+                    shutil.rmtree(target_dir, ignore_errors=True)
+                raise Exception(f"Repository path does not exist: {repo_path}")
+            
+            print(f"[clone_and_index] Repository root: {repo_path}")
+            
+            # Check privacy mode
+            privacy_mode = get_privacy_mode()
+            use_in_memory = privacy_mode.use_in_memory_storage()
+            
+            if use_in_memory:
+                print(f"[clone_and_index] Privacy mode enabled - Using in-memory storage")
+            else:
+                print(f"[clone_and_index] Using disk storage")
+            
+            # Index the cloned repository
+            print(f"[clone_and_index] Starting indexing...")
+            
+            # Use provided repo_name if available, otherwise generate from path
+            try:
+                if repo_name and repo_name.strip():
+                    rid = secure_filename(repo_name.strip())[:50]
+                    if not rid:  # If sanitization removed everything
+                        rid = f"repo_{uuid.uuid4().hex[:8]}"
+                else:
+                    # Generate from repository path
+                    try:
+                        rid = repo_id_from_path(repo_path)
+                        # Sanitize the repo_id
+                        if rid:
+                            rid = secure_filename(rid)[:50]
+                            if not rid:  # If sanitization removed everything
+                                rid = f"repo_{uuid.uuid4().hex[:8]}"
+                        else:
+                            rid = f"repo_{uuid.uuid4().hex[:8]}"
+                    except Exception as e:
+                        print(f"[clone_and_index] Warning: Could not generate repo_id from path: {e}")
+                        rid = f"repo_{uuid.uuid4().hex[:8]}"
+                
+                # Ensure we have a valid repo_id
+                if not rid or len(rid.strip()) == 0:
+                    rid = f"repo_{uuid.uuid4().hex[:8]}"
+            except Exception as e:
+                print(f"[clone_and_index] Error generating repo_id: {e}")
+                import traceback
+                traceback.print_exc()
+                rid = f"repo_{uuid.uuid4().hex[:8]}"
+            
+            print(f"[clone_and_index] Repo ID: {rid}")
+            
+            # Slice repository
+            chunks = slice_repo(repo_path)
+            print(f"[clone_and_index] Found {len(chunks)} chunks")
+            
+            # Create vector store
+            store = FaissStore(rid, base_dir=f"{DATA_DIR}/index", in_memory=use_in_memory)
+            store.build(chunks)
+            print(f"[clone_and_index] Index built successfully")
+            
+            # Associate with user
+            user_auth.add_user_repository(
+                user_id=user_id,
+                repo_id=rid,
+                repo_path=repo_path,
+                repo_name=repo_name or rid
+            )
+            
+            # Update index status
+            user_auth.update_repository_index_status(
+                user_id=user_id,
+                repo_id=rid,
+                is_indexed=True,
+                chunks_count=len(chunks)
+            )
+            
+            # Start watching for changes
+            try:
+                sync_manager = get_sync_manager()
+                sync_manager.watch_repo(repo_path, rid, base_dir=f"{DATA_DIR}/index")
+                print(f"[clone_and_index] Started auto-sync")
+            except Exception as e:
+                print(f"[clone_and_index] Warning: Could not start auto-sync: {e}")
+            
+            result = {
+                "ok": True,
+                "repo_id": rid,
+                "chunks": len(chunks),
+                "cloned_path": repo_path,
+                "repo_name": repo_name or rid,
+                "git_url": git_url
+            }
+            
+            print(f"[clone_and_index] Success: {result}")
+            return jsonify(result)
+            
+        except subprocess.TimeoutExpired:
+            # Clean up on timeout
+            if target_dir.exists():
+                shutil.rmtree(target_dir, ignore_errors=True)
+            return jsonify({
+                "ok": False,
+                "error": "Clone operation timed out. The repository may be too large or the network is slow."
+            }), 408
+        except Exception as e:
+            # Clean up on error
+            if target_dir.exists():
+                shutil.rmtree(target_dir, ignore_errors=True)
+            raise e
+            
+    except Exception as e:
+        error_msg = str(e)
+        error_trace = traceback.format_exc()
+        print(f"[clone_and_index] Error: {error_msg}")
+        print(f"[clone_and_index] Traceback:\n{error_trace}")
+        return jsonify({"ok": False, "error": error_msg, "traceback": error_trace}), 500
+
 
 @app.post("/search")
 @require_auth
@@ -769,7 +1115,6 @@ Or continue this conversation and I'll help you build it step by step!""",
         
         # Get user ID and verify ownership
         user_id = request.current_user_id
-        from backend.modules.user_repo_helper import verify_user_owns_repo
         
         # Multi-repo mode
         if repo_dirs:
@@ -801,7 +1146,6 @@ Or continue this conversation and I'll help you build it step by step!""",
         elif repo_dir:
             # Verify user owns the repo
             user_id = request.current_user_id
-            from backend.modules.user_repo_helper import verify_user_owns_repo
             
             if not verify_user_owns_repo(user_auth, user_id, repo_dir):
                 return jsonify({"ok": False, "error": "Repository not found or access denied"}), 403

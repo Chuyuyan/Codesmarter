@@ -1,0 +1,43 @@
+以下是可以直接复制粘贴的纯文本 Python 代码（没有任何 HTML 标签）：
+
+==========================================
+file_path = '/app/static/js/auth.js'
+with open(file_path, 'r', encoding='utf-8') as f:
+    lines = f.readlines()
+
+new_lines = []
+i = 0
+while i < len(lines):
+    if 'const API_BASE' in lines[i] and '127.0.0.1' in lines[i]:
+        new_lines.append("// Auto-detect API base URL based on current page\n")
+        new_lines.append("const API_BASE = (() => {\n")
+        new_lines.append("    if (window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'localhost') {\n")
+        new_lines.append("        return '';\n")
+        new_lines.append("    }\n")
+        new_lines.append("    return 'http://127.0.0.1:5050';\n")
+        new_lines.append("})();\n")
+        i += 1
+        continue
+    elif 'const url = `${API_BASE}${endpoint}`;' in lines[i]:
+        new_lines.append("        // Use relative path if API_BASE is empty\n")
+        new_lines.append("        const url = API_BASE ? `${API_BASE}${endpoint}` : endpoint;\n")
+        i += 1
+        continue
+    new_lines.append(lines[i])
+    i += 1
+
+with open(file_path, 'w', encoding='utf-8') as f:
+    f.writelines(new_lines)
+
+print("Fixed!")
+==========================================
+
+使用方法：
+1. 进入容器：docker exec -it smartcursor /bin/bash
+2. 运行 Python：python3
+3. 复制上面的代码块（从 file_path = 开始到 print("Fixed!") 结束）
+4. 粘贴到 Python 提示符中
+5. 按 Enter 执行
+6. 看到 "Fixed!" 后输入 exit() 退出 Python
+7. 验证：head -20 /app/static/js/auth.js
+

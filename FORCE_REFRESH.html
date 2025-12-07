@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Force Refresh - Check Tabs</title>
+    <script>
+        // Force clear cache and reload
+        window.addEventListener('load', function() {
+            console.log('=== Force Refresh Script ===');
+            
+            // Check if tabs exist
+            setTimeout(function() {
+                const tabs = document.querySelector('.index-tabs');
+                const uploadTab = document.querySelector('#upload-tab');
+                
+                console.log('Tabs element:', tabs);
+                console.log('Upload tab:', uploadTab);
+                
+                if (!tabs) {
+                    console.error('❌ TABS NOT FOUND! HTML is old version.');
+                    console.log('Current URL:', window.location.href);
+                    console.log('Page HTML (first 5000 chars):', document.documentElement.innerHTML.substring(0, 5000));
+                } else {
+                    console.log('✅ TABS FOUND!');
+                    console.log('Tabs HTML:', tabs.outerHTML);
+                }
+                
+                // Check if tabs are hidden
+                if (tabs) {
+                    const style = window.getComputedStyle(tabs);
+                    console.log('Tabs display:', style.display);
+                    console.log('Tabs visibility:', style.visibility);
+                    console.log('Tabs opacity:', style.opacity);
+                    console.log('Tabs height:', style.height);
+                }
+            }, 1000);
+        });
+        
+        // Add cache-busting timestamp to all resource requests
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                    console.log('Service Worker unregistered');
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Force Refresh Helper</h1>
+    <p>This page helps diagnose the tab issue.</p>
+    <p>Check the browser console (F12) for diagnostic information.</p>
+    <p><a href="/?v=" + Date.now()>Click here to reload with cache bust</a></p>
+</body>
+</html>
+

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartCursor - AI-Powered Code Assistant</title>
+    <link rel="stylesheet" href="/static/css/landing.css">
+    <link rel="stylesheet" href="/static/css/language-selector.css">
+    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.6/build/spline-viewer.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="landing-nav">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">🔍</span>
+                <span class="logo-text">SmartCursor</span>
+            </div>
+            <div class="nav-links">
+                <div id="languageSelectorPlaceholder"></div>
+                <a href="/login" class="nav-link">Sign In</a>
+                <a href="/register" class="nav-btn">Get Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <!-- Spline 3D Model Background -->
+        <div class="spline-container">
+            <spline-viewer 
+                url="https://prod.spline.design/9ID3om6JV0Hogb-b/scene.splinecode"
+                class="spline-viewer">
+            </spline-viewer>
+        </div>
+        
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="gradient-text">AI-Powered Code Assistant</span>
+                    <br>Like Cursor, But Better
+                </h1>
+                <p class="hero-subtitle">
+                    Analyze your codebase, ask questions, get instant answers with AI-powered code analysis. 
+                    Understand, refactor, debug, and optimize your code with intelligent assistance.
+                </p>
+                <div class="hero-cta">
+                    <a href="/register" class="btn btn-primary btn-large">Start Free</a>
+                    <a href="/login" class="btn btn-secondary btn-large">Sign In</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="code-preview">
+                    <div class="code-header">
+                        <span class="code-dot red"></span>
+                        <span class="code-dot yellow"></span>
+                        <span class="code-dot green"></span>
+                        <span class="code-title">code_analysis.py</span>
+                    </div>
+                    <div class="code-content">
+                        <div class="code-line"><span class="code-keyword">def</span> <span class="code-function">analyze_code</span>():</div>
+                        <div class="code-line">    <span class="code-comment"># AI-powered analysis</span></div>
+                        <div class="code-line">    <span class="code-keyword">return</span> <span class="code-string">"Smart insights"</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <h2 class="section-title">Powerful Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📚</div>
+                    <h3>Code Indexing</h3>
+                    <p>Index your entire repository with support for Git URLs, ZIP uploads, or local paths. Create a searchable knowledge base of your codebase.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <h3>AI Chat Assistant</h3>
+                    <p>Ask questions about your code and get intelligent answers with code citations. Understand complex codebases instantly.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔧</div>
+                    <h3>Smart Refactoring</h3>
+                    <p>Get AI-powered suggestions to improve your code structure, readability, and maintainability.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🐛</div>
+                    <h3>Debug Assistant</h3>
+                    <p>Identify bugs and issues in your code with intelligent analysis and suggestions.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Performance Optimization</h3>
+                    <p>Get recommendations to optimize your code for better performance and efficiency.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <h3>Code Generation</h3>
+                    <p>Generate new code, projects, and features based on your requirements and existing codebase.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works">
+        <div class="container">
+            <h2 class="section-title">How It Works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Sign Up</h3>
+                    <p>Create your free account in seconds</p>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Index Your Code</h3>
+                    <p>Upload your repository or connect via Git</p>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Ask & Analyze</h3>
+                    <p>Get instant AI-powered answers about your code</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>Ready to Transform Your Coding Experience?</h2>
+            <p>Join developers who are already using SmartCursor to write better code faster.</p>
+            <div class="cta-buttons">
+                <a href="/register" class="btn btn-primary btn-large">Get Started Free</a>
+                <a href="/login" class="btn btn-secondary btn-large">Sign In</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 SmartCursor. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="/static/js/i18n.js"></script>
+    <script src="/static/js/language-selector.js"></script>
+    <script src="/static/js/landing.js"></script>
+</body>
+</html>
+

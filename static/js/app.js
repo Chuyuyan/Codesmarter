@@ -35,6 +35,14 @@ if (document.readyState === 'loading') {
 function checkAuthStatus() {
     console.log('[app] checkAuthStatus called');
     
+    // Get current path to check if we're on a public page
+    const currentPath = window.location.pathname;
+    const publicPages = ['/', '/login', '/register', '/forgot-password', '/reset-password'];
+    const isPublicPage = publicPages.includes(currentPath);
+    const isDashboard = currentPath === '/dashboard';
+    
+    console.log('[app] Current path:', currentPath, 'isPublicPage:', isPublicPage, 'isDashboard:', isDashboard);
+    
     // Wait for both TokenManager and apiCall to be available
     if (typeof TokenManager === 'undefined' || typeof apiCall === 'undefined') {
         console.log('[app] Waiting for TokenManager or apiCall, retrying...', {
@@ -64,6 +72,12 @@ function checkAuthStatus() {
                 console.log('[app] Calling updateAuthUI...');
                 updateAuthUI(result.data.user);
                 console.log('[app] updateAuthUI completed');
+                
+                // If on login/register page and authenticated, redirect to dashboard
+                if (isPublicPage && currentPath !== '/') {
+                    console.log('[app] Authenticated user on public page, redirecting to dashboard');
+                    window.location.href = '/dashboard';
+                }
             } else {
                 console.warn('[app] ❌ Token invalid, clearing');
                 console.warn('[app] Response details:', {
@@ -78,20 +92,46 @@ function checkAuthStatus() {
                 if (authButtons) {
                     authButtons.style.display = 'none';
                 }
-                // Don't redirect - allow user to stay on page
+                // Redirect to landing page if on dashboard, or login if on other protected pages
+                if (isDashboard) {
+                    console.log('[app] Token invalid on dashboard, redirecting to landing');
+                    window.location.href = '/';
+                } else if (!isPublicPage) {
+                    console.log('[app] Token invalid, redirecting to login');
+                    window.location.href = '/login';
+                }
             }
         }).catch((error) => {
             console.error('[app] ❌ Error checking auth:', error);
             console.error('[app] Error stack:', error.stack);
-            // Error checking auth - hide buttons but don't redirect
+            // Error checking auth - clear token and redirect
+            TokenManager.removeToken();
             const authButtons = document.getElementById('authButtons');
             if (authButtons) {
                 authButtons.style.display = 'none';
             }
+            // Redirect to landing page if on dashboard, or login if on other protected pages
+            if (isDashboard) {
+                console.log('[app] Auth check error on dashboard, redirecting to landing');
+                window.location.href = '/';
+            } else if (!isPublicPage) {
+                console.log('[app] Auth check error, redirecting to login');
+                window.location.href = '/login';
+            }
         });
     } else {
-        console.log('[app] No token found, hiding auth buttons');
-        // Not authenticated - hide buttons
+        console.log('[app] No token found');
+        // Not authenticated - redirect to landing if on dashboard, or login if on other protected pages
+        if (isDashboard) {
+            console.log('[app] No token on dashboard, redirecting to landing');
+            window.location.href = '/';
+            return; // Stop execution, redirecting
+        } else if (!isPublicPage) {
+            console.log('[app] No token, redirecting to login');
+            window.location.href = '/login';
+            return; // Stop execution, redirecting
+        }
+        // On public page, just hide auth buttons
         const authButtons = document.getElementById('authButtons');
         if (authButtons) {
             authButtons.style.display = 'none';
@@ -161,6 +201,9 @@ function getAuthHeaders() {
     return headers;
 }
 
+// Export for use in other scripts
+window.getAuthHeaders = getAuthHeaders;
+
 // Helper function to show status messages
 function showStatus(elementId, message, type) {
     const statusEl = document.getElementById(elementId);
@@ -175,7 +218,182 @@ function hideStatus(elementId) {
     statusEl.style.display = 'none';
 }
 
-// Index repository
+// Tab switching
+document.addEventListener('DOMContentLoaded', () => {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetTab = btn.getAttribute('data-tab');
+            
+            // Update buttons
+            tabButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Update content
+            tabContents.forEach(c => {
+                c.classList.remove('active');
+                c.style.display = 'none';
+            });
+            
+            const targetContent = document.getElementById(`${targetTab}-tab`);
+            if (targetContent) {
+                targetContent.classList.add('active');
+                targetContent.style.display = 'block';
+            }
+        });
+    });
+    
+    // Initialize Git URL tab handler
+    const cloneBtn = document.getElementById('clone-btn');
+    if (cloneBtn) {
+        cloneBtn.addEventListener('click', handleCloneAndIndex);
+    }
+});
+
+// Clone and index Git repository
+async function handleCloneAndIndex() {
+    const gitUrl = document.getElementById('git-url').value.trim();
+    const repoName = document.getElementById('git-repo-name').value.trim();
+    const branch = document.getElementById('git-branch').value.trim();
+    const token = document.getElementById('git-token').value.trim();
+    
+    if (!gitUrl) {
+        showStatus('clone-status', 'Please enter a Git repository URL', 'error');
+        return;
+    }
+    
+    // Basic URL validation
+    const urlPattern = /^(https?:\/\/|git@|git:\/\/)/i;
+    if (!urlPattern.test(gitUrl)) {
+        showStatus('clone-status', 'Invalid Git URL format. Use https://github.com/user/repo or git@github.com:user/repo.git', 'error');
+        return;
+    }
+    
+    const btn = document.getElementById('clone-btn');
+    btn.disabled = true;
+    showStatus('clone-status', 'Cloning repository... This may take a few minutes.', 'loading');
+    
+    try {
+        const apiBase = (typeof API_BASE !== 'undefined' && API_BASE) ? API_BASE : '';
+        const endpoint = apiBase ? `${apiBase}/clone_and_index` : '/clone_and_index';
+        
+        const payload = {
+            git_url: gitUrl,
+            repo_name: repoName || undefined,
+            branch: branch || undefined,
+            token: token || undefined
+        };
+        
+        // Remove undefined fields
+        Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
+        
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                ...getAuthHeaders(),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        const data = await response.json();
+        
+        if (data.ok) {
+            showStatus('clone-status', 
+                `✅ Successfully cloned and indexed! Found ${data.chunks} chunks. Repository: ${data.repo_name || data.repo_id}`, 
+                'success');
+            // Clear inputs
+            document.getElementById('git-url').value = '';
+            document.getElementById('git-repo-name').value = '';
+            document.getElementById('git-branch').value = '';
+            document.getElementById('git-token').value = '';
+        } else {
+            let errorMsg = data.error || 'Unknown error';
+            if (errorMsg.includes('Authentication failed')) {
+                errorMsg = 'Authentication failed. Please check your Git URL and token (for private repositories).';
+            } else if (errorMsg.includes('Repository not found')) {
+                errorMsg = 'Repository not found. Please check the URL and ensure the repository exists.';
+            } else if (errorMsg.includes('Git is not installed')) {
+                errorMsg = 'Git is not installed on the server. Please contact the administrator.';
+            }
+            showStatus('clone-status', `❌ Error: ${errorMsg}`, 'error');
+        }
+    } catch (error) {
+        showStatus('clone-status', `❌ Network error: ${error.message}`, 'error');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// Upload and index
+document.getElementById('upload-btn').addEventListener('click', async () => {
+    const fileInput = document.getElementById('repo-file');
+    const repoName = document.getElementById('repo-name').value.trim();
+    
+    if (!fileInput.files || fileInput.files.length === 0) {
+        showStatus('upload-status', 'Please select a ZIP file', 'error');
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    if (!file.name.toLowerCase().endsWith('.zip')) {
+        showStatus('upload-status', 'Please upload a ZIP file. Compress your folder first.', 'error');
+        return;
+    }
+    
+    // Check file size (limit to 100MB)
+    const maxSize = 100 * 1024 * 1024; // 100MB
+    if (file.size > maxSize) {
+        showStatus('upload-status', 'File too large. Maximum size is 100MB. Please compress your folder more or remove large files.', 'error');
+        return;
+    }
+    
+    const btn = document.getElementById('upload-btn');
+    btn.disabled = true;
+    showStatus('upload-status', 'Uploading and indexing... This may take a few minutes.', 'loading');
+    
+    try {
+        const apiBase = (typeof API_BASE !== 'undefined' && API_BASE) ? API_BASE : '';
+        const endpoint = apiBase ? `${apiBase}/upload_and_index` : '/upload_and_index';
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        if (repoName) {
+            formData.append('repo_name', repoName);
+        }
+        
+        const headers = getAuthHeaders();
+        // Don't set Content-Type for FormData, browser will set it with boundary
+        delete headers['Content-Type'];
+        
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: headers,
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.ok) {
+            showStatus('upload-status', 
+                `✅ Successfully uploaded and indexed! Found ${data.chunks} chunks. Repository: ${data.repo_name || data.repo_id}`, 
+                'success');
+            // Clear file input
+            fileInput.value = '';
+            document.getElementById('repo-name').value = '';
+        } else {
+            showStatus('upload-status', `❌ Error: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        showStatus('upload-status', `❌ Network error: ${error.message}`, 'error');
+    } finally {
+        btn.disabled = false;
+    }
+});
+
+// Index repository (path method)
 document.getElementById('index-btn').addEventListener('click', async () => {
     const repoDir = document.getElementById('repo-dir').value.trim();
     if (!repoDir) {
@@ -188,8 +406,10 @@ document.getElementById('index-btn').addEventListener('click', async () => {
     showStatus('index-status', 'Indexing repository... This may take a few minutes.', 'loading');
 
     try {
-        const apiBase = (typeof API_BASE !== 'undefined' ? API_BASE : 'http://127.0.0.1:5050');
-        const response = await fetch(`${apiBase}/index_repo`, {
+        // Use relative path if API_BASE is empty (same origin), otherwise use full URL
+        const apiBase = (typeof API_BASE !== 'undefined' && API_BASE) ? API_BASE : '';
+        const endpoint = apiBase ? `${apiBase}/index_repo` : '/index_repo';
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: getAuthHeaders(),
             body: JSON.stringify({ repo_dir: repoDir })
@@ -258,7 +478,9 @@ document.getElementById('chat-btn').addEventListener('click', async () => {
     document.getElementById('citations').innerHTML = '';
 
     try {
-        const apiBase = typeof API_BASE !== 'undefined' ? API_BASE : 'http://127.0.0.1:5050';
+        // Use relative path if API_BASE is empty (same origin), otherwise use full URL
+        const apiBase = (typeof API_BASE !== 'undefined' && API_BASE) ? API_BASE : '';
+        const endpoint = apiBase ? `${apiBase}/chat` : '/chat';
         
         // Build request body - only include analysis_type if manually selected
         const requestBody = {
@@ -272,7 +494,7 @@ document.getElementById('chat-btn').addEventListener('click', async () => {
         }
         // If autoDetect is true, backend will automatically detect the analysis type
         
-        const response = await fetch(`${apiBase}/chat`, {
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: getAuthHeaders(),
             body: JSON.stringify(requestBody)

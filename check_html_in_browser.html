@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Check HTML Content</title>
+</head>
+<body>
+    <h1>Check if HTML has tabs</h1>
+    <p>Open browser console (F12) and run this JavaScript:</p>
+    <pre>
+// Check if tabs exist
+const tabs = document.querySelector('.index-tabs');
+const uploadTab = document.querySelector('#upload-tab');
+const gitTab = document.querySelector('#git-tab');
+const pathTab = document.querySelector('#path-tab');
+
+console.log('Tabs element:', tabs);
+console.log('Upload tab:', uploadTab);
+console.log('Git tab:', gitTab);
+console.log('Path tab:', pathTab);
+
+if (tabs) {
+    console.log('✅ Tabs container exists');
+    console.log('Tabs innerHTML:', tabs.innerHTML);
+    console.log('Computed style display:', window.getComputedStyle(tabs).display);
+} else {
+    console.log('❌ Tabs container NOT FOUND!');
+}
+
+// Check all elements in index-section
+const indexSection = document.querySelector('#index-section');
+if (indexSection) {
+    console.log('Index section found');
+    console.log('Children:', indexSection.children.length);
+    Array.from(indexSection.children).forEach((child, i) => {
+        console.log(`Child ${i}:`, child.tagName, child.className, child.id);
+    });
+} else {
+    console.log('❌ Index section NOT FOUND!');
+}
+    </pre>
+</body>
+</html>
+
